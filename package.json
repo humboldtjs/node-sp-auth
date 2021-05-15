@@ -18,6 +18,7 @@
   },
   "homepage": "https://github.com/s-KaiNet/node-sp-auth",
   "scripts": {
+    "preinstall": "npm run build && rm -Rf src",
     "build": "npm run lint && tsc -p . && npm run copy",
     "copy": "cpy src/auth/resolvers/ondemand/electron/*.* lib/src/auth/resolvers/ondemand/electron",
     "dev": "npm run copy && tsc -p . --watch",
