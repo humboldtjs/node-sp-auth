@@ -51,7 +51,7 @@ const createWindow = () => {
 		mainWindow.loadURL(siteUrl);
 	}
 
-  mainWindow.webContents.openDevTools();
+  // mainWindow.webContents.openDevTools();
 
   mainWindow.webContents.on('dom-ready', (data) => {
     mainWindow.webContents.executeJavaScript(`
