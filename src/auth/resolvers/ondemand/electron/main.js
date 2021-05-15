@@ -15,8 +15,13 @@ const url = require('url');
 let mainWindow = null;
 
 const createWindow = () => {
-  let siteUrl = process.argv[3];
-  let force = process.argv[4] === 'true';
+  let idx = 3;
+  if (process.argv[idx] == "--") idx++;
+
+  let siteUrl = process.argv[idx++];
+  let force = process.argv[idx++] === 'true';
+  let username = process.argv[idx++];
+  let password = process.argv[idx++];
   if (siteUrl.endsWith('/')) {
     siteUrl = siteUrl.slice(0, -1);
   }
@@ -46,7 +51,93 @@ const createWindow = () => {
 		mainWindow.loadURL(siteUrl);
 	}
 
+  mainWindow.webContents.openDevTools();
+
   mainWindow.webContents.on('dom-ready', (data) => {
+    mainWindow.webContents.executeJavaScript(`
+      let username = "${username}";
+      let password = "${password}";
+
+      let stage = 0;
+      let delay = 500;
+      let speed = 100;
+
+      let doEvent = (el, name) => {
+        let evt = document.createEvent("HTMLEvents");
+        evt.initEvent(name, false, true);
+        el.dispatchEvent(evt);
+      };
+
+      let doLoop = () => {
+        if (delay > 0) {
+          delay -= speed;
+          if (delay < 0) delay = 0;
+        } else {
+          if (stage == 0 && document.body.innerHTML.indexOf("Stay signed in?") != -1) {
+            stage = 4;
+          }
+          switch (stage) {
+            case 0:
+              let emailInput = document.querySelector("input[name=loginfmt][type=email]");
+              if (emailInput) {
+                emailInput.value = username;
+                doEvent(emailInput, "change");
+                stage++;
+                delay = 200;
+              }
+              break;
+            case 1:
+              let nextButton = document.querySelector("input[type=submit][value=Next]");
+              if (nextButton) {
+                nextButton.click();
+                stage++;
+                delay = 1000;
+              }
+              break;
+            case 2:
+              let passwordInput = document.querySelector("input[name=passwd][type=password]");
+              if (passwordInput) {
+                passwordInput.value = password;
+                doEvent(passwordInput, "change");
+                stage++;
+                delay = 200;
+              }
+              break;
+            case 3:
+              let signinButton = document.querySelector("input[type=submit][value='Sign in']");
+              if (signinButton) {
+                signinButton.click();
+                stage++;
+                delay = 1000;
+              }
+              break;
+            case 4:
+              let dontShowCheckbox = document.querySelector("input[type=checkbox][name=DontShowAgain]");
+              if (dontShowCheckbox) {
+                dontShowCheckbox.click();
+                stage++;
+                delay = 200;
+              }
+              break;
+            case 5:
+              let yesButton = document.querySelector("input[type=submit][value=Yes]");
+              if (yesButton) {
+                yesButton.click();
+                stage++;
+                delay = -1;
+              }
+              break;
+          }
+        }
+
+        if (delay != -1) {
+          window.setTimeout(doLoop, speed);
+        }
+      }
+
+      doLoop();
+    `);
+    
     const loadedUrl = mainWindow.webContents.getURL();
     if (loadedUrl.indexOf(siteUrl) !== -1 && (loadedUrl.indexOf(siteUrl + '/_layouts/15/start.aspx') !== -1 || loadedUrl.indexOf(siteUrl + '/_') === -1)) {
       const session = mainWindow.webContents.session;

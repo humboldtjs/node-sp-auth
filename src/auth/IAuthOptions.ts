@@ -47,6 +47,7 @@ export interface IOnDemandCredentials {
   ondemand: boolean;
   electron?: string;
   force?: boolean;
+  ondemandAutomatedLogin?: { username?: string, password?: string };
   persist?: boolean;
   ttl?: number; // session TTL in minutes
 }
